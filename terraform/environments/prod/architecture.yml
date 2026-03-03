@@ -108,7 +108,7 @@ virtual_machines:
     template_id: 9000
 
     cpu: 2
-    memory: 4096
+    memory: 5120
     disks:
       - datastore_id: "local-lvm"
         interface: "scsi0"

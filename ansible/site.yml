@@ -1,8 +1,23 @@
 ---
 - hosts: reverse-proxy
   become: true
+
   roles:
     - role: docker
-      tag: docker
+      tags: docker
+
     - role: proxy
-      tag: proxy
+      tags: proxy
+
+- hosts: minecraft-server
+  become: true
+
+  roles:
+    - role: docker
+      tags: docker
+
+    - role: backup
+      tags: backup
+
+    - role: minecraft
+      tags: minecraft

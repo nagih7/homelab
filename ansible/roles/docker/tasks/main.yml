@@ -1,9 +1,39 @@
 ---
-- name: Install Docker and Docker Compose (Ubuntu 24.04)
+- name: Cài đặt các package phụ trợ
   apt:
     name:
-      - docker.io
-      - docker-compose-v2
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+    update_cache: yes
+
+- name: Tạo thư mục chứa keyring cho apt
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Tải Docker GPG key chính chủ
+  get_url:
+    url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+- name: Thêm Docker repository (Tự động nhận diện Debian/Ubuntu)
+  apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker
+
+- name: Install Docker CE và Docker Compose Plugin
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
     state: present
     update_cache: yes
 
@@ -18,7 +48,7 @@
     name: "{{ item }}"
     groups: docker
     append: yes
-  loop: "{{ docker_users }}"
+  loop: "{{ docker_users | default(['root']) }}"
 
 - name: Configure Docker daemon with best practices
   copy:

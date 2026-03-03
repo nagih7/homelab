@@ -20,6 +20,18 @@ http:
       service: seafile-service
       entryPoints: ["web"]
 
+    kong-admin:
+      rule: "Host(`kong.{{ base_domain }}`) && PathPrefix(`/admin-api`)"
+      service: kong-admin
+      entryPoints: ["web"]
+      middlewares: 
+        - "kong-strip-prefix"
+
+    kong-gateway:
+      rule: "Host(`kong.{{ base_domain }}`)"
+      service: kong-gateway
+      entryPoints: ["web"]    
+
   services:
     gitlab-service:
       loadBalancer:
@@ -30,6 +42,16 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.1.320:80"
+
+    kong-admin:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.63:8001"
+
+    kong-gateway:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.63:8002"
 
   middlewares:
     secure-headers:
@@ -51,3 +73,8 @@ http:
           X-Forwarded-Proto: "https"
         customResponseHeaders:
           X-Frame-Options: "SAMEORIGIN"
+
+    kong-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - "/admin-api"

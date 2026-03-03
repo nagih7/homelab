@@ -1,4 +1,4 @@
-resource "proxmox_virtual_environment_vm" "reverse-proxy" {
+resource "proxmox_virtual_environment_vm" "this" {
   vm_id         = var.vm_config.id
   name          = var.vm_config.name
   node_name     = var.vm_config.node
@@ -55,5 +55,3 @@ resource "proxmox_virtual_environment_vm" "reverse-proxy" {
   #   prevent_destroy = true
   # }
 }
-
-
