@@ -1,0 +1,61 @@
+---
+- name: Install Docker and Docker Compose (Ubuntu 24.04)
+  apt:
+    name:
+      - docker.io
+      - docker-compose-v2
+    state: present
+    update_cache: yes
+
+- name: Ensure Docker service is started and enabled
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add users to docker group
+  user:
+    name: "{{ item }}"
+    groups: docker
+    append: yes
+  loop: "{{ docker_users }}"
+
+- name: Configure Docker daemon with best practices
+  copy:
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        },
+        "storage-driver": "overlay2",
+        "live-restore": true,
+        "userland-proxy": false,
+        "default-ulimits": {
+          "nofile": {
+            "Name": "nofile",
+            "Hard": 64000,
+            "Soft": 64000
+          }
+        }
+      }
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+  notify: Restart Docker
+
+- name: Verify Docker installation
+  command: docker --version
+  register: docker_version
+  changed_when: false
+
+- name: Verify Docker Compose installation
+  command: docker compose version
+  register: compose_version
+  changed_when: false
+
+- name: Display versions
+  debug:
+    msg:
+      - "{{ docker_version.stdout }}"
+      - "{{ compose_version.stdout }}"

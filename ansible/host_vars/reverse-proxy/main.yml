@@ -1,0 +1,7 @@
+base_domain: nooblearn2code.com
+edge_dir: "/opt/edge-proxy"
+
+docker_users:
+  - "nagih"
+
+edge_network: "edge-network"

@@ -1,0 +1,53 @@
+---
+# Dynamic configuration for services not running in Docker
+# Services running in Docker should use labels in their docker-compose files
+
+http:
+  routers:
+    traefik-dashboard:
+      rule: "Host(`traefik.{{ base_domain }}`)"
+      service: api@internal
+      entryPoints: ["web"]
+      middlewares: ["secure-headers"]
+      
+    gitlab-route:
+      rule: "Host(`gitlab.{{ base_domain }}`)"
+      service: gitlab-service
+      entryPoints: ["web"]
+
+    seafile-route:
+      rule: "Host(`seafile.{{ base_domain }}`)"
+      service: seafile-service
+      entryPoints: ["web"]
+
+  services:
+    gitlab-service:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.230:80"
+
+    seafile-service:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.320:80"
+
+  middlewares:
+    secure-headers:
+      headers:
+        sslRedirect: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        customFrameOptionsValue: "SAMEORIGIN"
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+    
+    # WebSocket support middleware (for n8n, etc.)
+    websocket-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+        customResponseHeaders:
+          X-Frame-Options: "SAMEORIGIN"

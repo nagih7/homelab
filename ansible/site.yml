@@ -1,0 +1,8 @@
+---
+- hosts: reverse-proxy
+  become: true
+  roles:
+    - role: docker
+      tag: docker
+    - role: proxy
+      tag: proxy
