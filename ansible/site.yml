@@ -1,4 +1,10 @@
 ---
+- hosts: all
+  become: true
+  roles:
+    - role: bootstrap
+      tags: bootstrap
+
 - hosts: reverse-proxy
   become: true
 

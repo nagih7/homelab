@@ -1,3 +1,4 @@
+timezone: "Asia/Ho_Chi_Minh"
 docker_users:
   - "nagih"
 

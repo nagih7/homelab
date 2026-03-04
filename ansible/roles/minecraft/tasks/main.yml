@@ -40,13 +40,23 @@
     enabled: true
   become: true
 
-- name: Cronjob auto compress and backup the world at 2AM and 2PM every day
+- name: Create backup script
+  ansible.builtin.copy:
+    dest: "{{ minecraft_config_dir }}/backup.sh"
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      TIMESTAMP=$(date +%F_%H%M)
+      tar -czf {{ backup_dir }}/minecraft_${TIMESTAMP}.tar.gz {{ minecraft_data_dir }} > /tmp/backup.log 2>&1
+  become: true
+
+- name: Cronjob auto compress and backup
   ansible.builtin.cron:
     name: "Auto Backup Minecraft World"
     minute: "0"
     hour: "2,14"
-    job: >
-      tar -czf {{ backup_dir }}/mc_world_$(date +\%F_%H).tar.gz {{ minecraft_config_dir }}/data/world > /dev/null 2>&1
+    job: "/opt/minecraft-server/backup.sh"
+  become: true
 
 - name: Cronjob auto delete backups after 7 days
   ansible.builtin.cron:
@@ -54,4 +64,4 @@
     minute: "30"
     hour: "3" # Chạy lúc 3:30 sáng hàng ngày (tránh giờ backup cao điểm)
     job: >
-      find {{ backup_dir }} -name "mc_world_*.tar.gz" -type f -mtime +7 -delete
+      find {{ backup_dir }} -name "minecraft_*.tar.gz" -type f -mtime +7 -delete
