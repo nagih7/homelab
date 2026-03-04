@@ -1,4 +1,3 @@
-timezone: "Asia/Ho_Chi_Minh"
 base_domain: nooblearn2code.com
 edge_dir: "/opt/edge-proxy"
 

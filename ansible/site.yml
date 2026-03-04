@@ -5,6 +5,12 @@
     - role: bootstrap
       tags: bootstrap
 
+- hosts: k8s-cluster
+  become: true
+  roles:
+    - role: tailscale
+      tags: tailscale
+
 - hosts: reverse-proxy
   become: true
 
