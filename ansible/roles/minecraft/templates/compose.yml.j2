@@ -6,6 +6,9 @@ services:
     ports:
       - "{{ minecraft_port }}:25565"
     environment:
+      CREATE_CONSOLE_IN_PIPE: true
+      MOTD: "§6Nooblearn2code §f- §aSurvival Server"
+      MODRINTH_ALLOWED_VERSION_TYPE: "alpha"
       EULA: {{ minecraft_eula }}
       TYPE: {{ minecraft_type }}
       VERSION: {{ minecraft_version }}
