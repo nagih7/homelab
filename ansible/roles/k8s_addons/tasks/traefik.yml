@@ -29,12 +29,11 @@
               enabled: true
             kubernetesIngress:
               enabled: true
-          # Bật dashboard nội bộ để dễ debug (truy cập qua port-forward)
           ingressRoute:
             dashboard:
               enabled: true
 
-    - name: Tạo Secret chứa Password cho Traefik Dashboard (admin:admin)
+    - name: Create Secret contain Password for Traefik Dashboard (admin:admin)
       kubernetes.core.k8s:
         state: present
         definition:
@@ -47,7 +46,7 @@
           stringData:
             users: "{{ traefik_dashboard_user }}:{{ traefik_dashboard_pass }}"
 
-    - name: Tạo Middleware BasicAuth
+    - name: Create Middleware BasicAuth
       kubernetes.core.k8s:
         state: present
         definition:
@@ -60,7 +59,7 @@
             basicAuth:
               secret: traefik-dashboard-auth
 
-    - name: Tạo IngressRoute móc Dashboard ra ngoài
+    - name: Create IngressRoute and hook the Dashboard outwards
       kubernetes.core.k8s:
         state: present
         definition: |

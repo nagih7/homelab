@@ -1,7 +1,3 @@
-timezone: "Asia/Ho_Chi_Minh"
-docker_users:
-  - "nagih"
-
 backup_disk_device: sda
 backup_dir: /mnt/hdd-backup
 
