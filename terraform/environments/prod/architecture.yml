@@ -1,36 +1,4 @@
 virtual_machines:
-  reverse-proxy:
-    id: 101
-    name: "reverse-proxy"
-    node: "nagih"
-    scsi_hardware: "virtio-scsi-single"
-
-    template_id: 9000
-
-    cpu: 2
-    memory: 2048
-    disks:
-      - datastore_id: "local-lvm"
-        interface: "scsi0"
-        size: 20
-        file_format: "raw"
-        discard: "on"
-        ssd: true
-
-    dns:
-      - "8.8.8.8"
-      - "1.1.1.1"
-
-    ip_config:
-      address: "192.168.1.101/24"
-      gateway: "192.168.1.1"
-
-    user:
-      username: "nagih"
-      keys:
-        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB5zy0044P9cHpQ9zhu3wdnGzPrYIeVHavdd3sxeopHU vuongmanhnghia@gmail.com"
-        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAcAhDKqQubrgkHLasQ7IYnLR5v45TkXw2FJ3o5rPBgL vuongmanhnghia@gmail.com"
-
   k8s-master:
     id: 201
     name: "k8s-master"

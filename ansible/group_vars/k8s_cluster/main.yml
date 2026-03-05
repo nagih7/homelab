@@ -1,3 +1,9 @@
 ---
 base_domain: nooblearn2code.com
 gitlab_version: "16.11.0-ce.0"
+
+cloudflare_ddns_version: "latest"
+cloudflare_ddns_image: "oznu/cloudflare-ddns:{{ cloudflare_ddns_version }}"
+cloudflare_ddns_container: cloudflare-ddns
+cloudflare_ddns_zone: "{{ base_domain }}"
+cloudflare_ddns_subdomain: "gateway"

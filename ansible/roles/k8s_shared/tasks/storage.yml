@@ -1,0 +1,164 @@
+---
+- name: Deploy Shared Data Services (Postgres & Redis)
+  delegate_to: localhost
+  become: false
+  block:
+    - name: Create shared-services namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: shared-services
+
+    - name: Deploy Shared Secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: shared-db-secrets
+            namespace: shared-services
+          type: Opaque
+          stringData:
+            postgres-password: "{{ postgres_root_password }}"
+            redis-password: "{{ redis_password }}"
+
+    # ================= REDIS 8 =================
+    - name: Deploy Redis Deployment
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: shared-redis
+            namespace: shared-services
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: shared-redis
+            template:
+              metadata:
+                labels:
+                  app: shared-redis
+              spec:
+                containers:
+                - name: redis
+                  image: redis:8-alpine
+                  command:
+                    - "redis-server"
+                    - "--requirepass"
+                    - "$(REDIS_PASSWORD)"
+                    - "--appendonly"
+                    - "yes"
+                  env:
+                  - name: REDIS_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: shared-db-secrets
+                        key: redis-password
+                  ports:
+                  - containerPort: 6379
+                  volumeMounts:
+                  - name: redis-data
+                    mountPath: /data
+                volumes:
+                - name: redis-data
+                  persistentVolumeClaim:
+                    claimName: redis-data-pvc
+          ---
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: redis-data-pvc
+            namespace: shared-services
+          spec:
+            accessModes: [ReadWriteOnce]
+            storageClassName: local-path
+            resources:
+              requests:
+                storage: 2Gi
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: shared-redis-service
+            namespace: shared-services
+          spec:
+            selector:
+              app: shared-redis
+            ports:
+              - port: 6379
+                targetPort: 6379
+
+    # ================= POSTGRESQL 18 =================
+    - name: Deploy PostgreSQL StatefulSet
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: apps/v1
+          kind: StatefulSet
+          metadata:
+            name: shared-postgres
+            namespace: shared-services
+          spec:
+            serviceName: shared-postgres-service
+            replicas: 1
+            selector:
+              matchLabels:
+                app: shared-postgres
+            template:
+              metadata:
+                labels:
+                  app: shared-postgres
+              spec:
+                containers:
+                - name: postgres
+                  image: postgres:18-alpine
+                  env:
+                  - name: POSTGRES_USER
+                    value: "{{ postgres_root_user }}"
+                  - name: POSTGRES_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: shared-db-secrets
+                        key: postgres-password
+                  - name: PGDATA
+                    value: /var/lib/postgresql/data/pgdata
+                  ports:
+                  - containerPort: 5432
+                  volumeMounts:
+                  - name: postgres-data
+                    mountPath: /var/lib/postgresql/data
+                volumes:
+                - name: postgres-data
+                  persistentVolumeClaim:
+                    claimName: postgres-data-pvc
+          ---
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: postgres-data-pvc
+            namespace: shared-services
+          spec:
+            accessModes: [ReadWriteOnce]
+            storageClassName: local-path
+            resources:
+              requests:
+                storage: 20Gi
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: shared-postgres-service
+            namespace: shared-services
+          spec:
+            selector:
+              app: shared-postgres
+            ports:
+              - port: 5432
+                targetPort: 5432
