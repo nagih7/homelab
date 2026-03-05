@@ -1,0 +1,51 @@
+---
+# ========== POSTGRES ========== #
+postgres_root_user: "noob"
+postgres_root_password: "nooblearn2code_postgres_pass"
+postgres_port: 5432
+
+# Databases
+postgres_databases:
+  # GitLab
+  - name: "gitlab"
+    user: "gitlab"
+    password: "gitlab_db_pass"
+
+  # EthnoSoul Legacy
+  - name: "esl"
+    user: "esl"
+    password: "esl_db_pass"
+
+  # Authentication Service
+  - name: "auth-service"
+    user: "auth"
+    password: "nooblearn2code_database_password"
+
+  # Blog Service
+  - name: "blog-service"
+    user: "blog"
+    password: "nooblearn2code_database_password"
+
+  # Quizz Service
+  - name: "uniquizz-service"
+    user: "uniquizz"
+    password: "nooblearn2code_database_password"
+
+  # ResumeMind Service
+  - name: "resumind-service"
+    user: "resumind"
+    password: "hoanggxyuuki"
+
+  # Lunar Service
+  - name: "lunar-service"
+    user: "lunar"
+    password: "hoanggxyuuki"
+
+  # Seafile
+  - name: "seafile"
+    user: "seafile"
+    password: "seafile_db_pass"
+
+# ========== REDIS ========== #
+redis_password: "nooblearn2code_redis_pass"
+redis_port: 6379

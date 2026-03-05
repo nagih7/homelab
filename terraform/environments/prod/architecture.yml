@@ -76,7 +76,7 @@ virtual_machines:
     disks:
       - datastore_id: "local-lvm"
         interface: "scsi0"
-        size: 20
+        size: 100
         file_format: "raw"
         discard: "on"
         ssd: true
