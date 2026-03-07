@@ -14,6 +14,7 @@
         ps.pyyaml
         ps.kubernetes
         ps.passlib
+        ps.psycopg2
       ]);
     in
     {

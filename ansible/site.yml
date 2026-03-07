@@ -36,3 +36,4 @@
     - { role: k8s_addons, tags: k8s-addons }
     - { role: k8s_shared, tags: k8s-shared }
     - { role: k8s_gitlab, tags: k8s-gitlab }
+    - { role: k8s_proxmox, tags: k8s-proxmox }

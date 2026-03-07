@@ -48,6 +48,11 @@ virtual_machines:
         file_format: "raw"
         discard: "on"
         ssd: true
+      - datastore_id: "hdd-storage"
+        interface: "scsi1"
+        size: 100
+        file_format: "qcow2"
+        discard: "on"
 
     dns:
       - "8.8.8.8"
@@ -223,3 +228,34 @@ virtual_machines:
       username: "kiendt"
       keys:
         - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPKl+/2WQIcidE3bMa0byEY/49UjA9ufI3+ybWhl5FiT admin@DESKTOP-PRQ4TMA"
+
+  hieuvu:
+    id: 606
+    name: "hieuvu"
+    node: "nagih"
+    scsi_hardware: "virtio-scsi-single"
+
+    template_id: 9000
+
+    cpu: 1
+    memory: 4096
+    disks:
+      - datastore_id: "local-lvm"
+        interface: "scsi0"
+        size: 20
+        file_format: "raw"
+        discard: "on"
+        ssd: true
+
+    dns:
+      - "8.8.8.8"
+      - "1.1.1.1"
+
+    ip_config:
+      address: "192.168.1.66/24"
+      gateway: "192.168.1.1"
+
+    user:
+      username: "hieuvu"
+      keys:
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKNzB14iW42D6K2y1+UZvhz52vWFsdJg7i5vBxSEd3By hainam@MSI"
