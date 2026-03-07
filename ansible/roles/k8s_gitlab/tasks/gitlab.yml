@@ -1,0 +1,202 @@
+- name: Deploy GitLab on K3s
+  delegate_to: localhost
+  become: false
+  tags: k8s-gitlab
+  block:
+    - name: Create GitLab namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ gitlab_namespace }}"
+
+    - name: Deploy Persistent Volumes (hostPath for legacy data)
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: gitlab-data-pv
+          spec:
+            capacity:
+              storage: 50Gi
+            accessModes: [ReadWriteOnce]
+            persistentVolumeReclaimPolicy: Retain
+            storageClassName: local-path
+            hostPath:
+              path: "/mnt/data/gitlab/data"
+            nodeAffinity:
+              required:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k8s-worker-1 # Đổi lại đúng tên node chứa data
+          ---
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: gitlab-config-pv
+          spec:
+            capacity:
+              storage: 2Gi
+            accessModes: [ReadWriteOnce]
+            persistentVolumeReclaimPolicy: Retain
+            storageClassName: local-path
+            hostPath:
+              path: "/mnt/data/gitlab/config"
+            nodeAffinity:
+              required:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k8s-worker-1
+
+    - name: Deploy Persistent Volume Claims
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: gitlab-data-pvc
+            namespace: gitlab
+          spec:
+            accessModes: [ReadWriteOnce]
+            storageClassName: local-path
+            resources:
+              requests:
+                storage: 50Gi
+            volumeName: gitlab-data-pv
+          ---
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: gitlab-config-pvc
+            namespace: gitlab
+          spec:
+            accessModes: [ReadWriteOnce]
+            storageClassName: local-path
+            resources:
+              requests:
+                storage: 2Gi
+            volumeName: gitlab-config-pv
+
+    - name: Deploy GitLab StatefulSet
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: apps/v1
+          kind: StatefulSet
+          metadata:
+            name: gitlab
+            namespace: gitlab
+          spec:
+            serviceName: gitlab-service
+            replicas: 1
+            selector:
+              matchLabels:
+                app: gitlab
+            template:
+              metadata:
+                labels:
+                  app: gitlab
+              spec:
+                containers:
+                - name: gitlab
+                  image: gitlab/gitlab-ce:{{ gitlab_version }}
+                  imagePullPolicy: IfNotPresent
+                  env:
+                  - name: GITLAB_OMNIBUS_CONFIG
+                    value: "from_file '/etc/gitlab/gitlab.rb'"
+                  ports:
+                  - containerPort: 80
+                    name: http
+                  - containerPort: 22
+                    name: ssh
+                  volumeMounts:
+                  - name: gitlab-config
+                    mountPath: /etc/gitlab
+                  - name: gitlab-data
+                    mountPath: /var/opt/gitlab
+                  - name: dshm
+                    mountPath: /dev/shm
+                volumes:
+                - name: gitlab-config
+                  persistentVolumeClaim:
+                    claimName: gitlab-config-pvc
+                - name: gitlab-data
+                  persistentVolumeClaim:
+                    claimName: gitlab-data-pvc
+                - name: dshm
+                  emptyDir:
+                    medium: Memory
+                    sizeLimit: 256Mi
+
+    - name: Deploy GitLab Service
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: gitlab-service
+            namespace: gitlab
+          spec:
+            selector:
+              app: gitlab
+            ports:
+              - name: http
+                port: 80
+                targetPort: 80
+              - name: ssh
+                port: 22
+                targetPort: 22
+
+    - name: Deploy Middleware for GitLab
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: traefik.io/v1alpha1
+          kind: Middleware
+          metadata:
+            name: secure-headers
+            namespace: gitlab # Đẻ Middleware ngay trong xóm gitlab
+          spec:
+            headers:
+              sslRedirect: true
+              forceSTSHeader: true
+              stsIncludeSubdomains: true
+              stsPreload: true
+              stsSeconds: 31536000
+              customFrameOptionsValue: "SAMEORIGIN"
+              contentTypeNosniff: true
+              browserXssFilter: true
+              referrerPolicy: "strict-origin-when-cross-origin"
+
+    - name: Deploy Traefik IngressRoute for GitLab
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: gitlab-ingress
+            namespace: gitlab
+          spec:
+            entryPoints:
+              - web
+            routes:
+              - match: Host(`gitlab.{{ base_domain }}`)
+                kind: Rule
+                services:
+                  - name: gitlab-service
+                    port: 80
+                middlewares:
+                  - name: secure-headers
