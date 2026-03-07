@@ -12,6 +12,9 @@ tunnel_credentials_secret: tunnel-credentials
 tunnel_config: tunnel-config
 tunnel_label: cloudflared
 
+# Cloudflare DDNS
+ddns_worker_hostname: k8s-worker-1
+
 # Traefik
 traefik_name: traefik
 traefik_container: traefik

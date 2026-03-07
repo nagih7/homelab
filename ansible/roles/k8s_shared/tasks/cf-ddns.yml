@@ -36,6 +36,8 @@
                 labels:
                   app: cloudflare-ddns
               spec:
+                nodeSelector:
+                  kubernetes.io/hostname: {{ ddns_worker_hostname }}
                 containers:
                 - name: {{ cloudflare_ddns_container }}
                   image: {{ cloudflare_ddns_image }}
